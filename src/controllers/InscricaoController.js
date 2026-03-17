@@ -1,39 +1,39 @@
-const InscricaoModel = require("../models/InscricaoModel");
+const inscricoes = [];
 
-function store(req, res) {
-  const { eventoId, participanteId } = req.body;
+module.exports = {
 
-  if (!eventoId || !participanteId) {
-    return res.status(400).json({ erro: "eventoId e participanteId são obrigatórios" });
+  index(req, res) {
+    res.json(inscricoes);
+  },
+
+  store(req, res) {
+    const nova = {
+      id: inscricoes.length + 1,
+      ...req.body,
+      status: "confirmada",
+      dataInscricao: new Date()
+    };
+
+    inscricoes.push(nova);
+    res.status(201).json(nova);
+  },
+
+  showByEvento(req, res) {
+    const { eventoId } = req.params;
+    const lista = inscricoes.filter(i => i.eventoId == eventoId);
+    res.json(lista);
+  },
+
+  cancelar(req, res) {
+    const { id } = req.params;
+    const inscricao = inscricoes.find(i => i.id == id);
+
+    if (!inscricao) {
+      return res.status(404).json({ erro: "Não encontrada" });
+    }
+
+    inscricao.status = "cancelada";
+    res.json(inscricao);
   }
 
-  const resultado = InscricaoModel.criar(parseInt(eventoId), parseInt(participanteId));
-
-  if (resultado.erro) {
-    return res.status(400).json(resultado);
-  }
-
-  res.status(201).json(resultado);
-}
-
-function index(req, res) {
-  res.json(InscricaoModel.listarTodas());
-}
-
-function listarPorEvento(req, res) {
-  const eventoId = parseInt(req.params.eventoId);
-  res.json(InscricaoModel.listarPorEvento(eventoId));
-}
-
-function cancelar(req, res) {
-  const id = parseInt(req.params.id);
-  const inscricao = InscricaoModel.cancelar(id);
-
-  if (!inscricao) {
-    return res.status(404).json({ erro: "Inscrição não encontrada" });
-  }
-
-  res.json(inscricao);
-}
-
-module.exports = { store, index, listarPorEvento, cancelar };
+};
